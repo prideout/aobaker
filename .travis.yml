@@ -1,0 +1,7 @@
+language: objective-c
+osx_image: xcode8
+script:
+    - cp embree.rb /usr/local/Library/Formula
+    - brew install cgal embree
+    - cmake -H. -Bbuild
+    - cmake --build build
