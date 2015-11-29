@@ -1,4 +1,6 @@
 #include <thekla_atlas.h>
+#include <embree2/rtcore.h>
+
 #include <cstdio>
 #include <cassert>
 

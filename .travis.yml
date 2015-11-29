@@ -2,7 +2,7 @@ language: objective-c
 osx_image: xcode7
 script:
     - cp embree.rb /usr/local/Library/Formula
-    - brew install embree cmake
+    - brew install embree tbb cmake
     - cmake -H. -Bbuild
     - cmake --build build
     - build/aobaker torii.obj
