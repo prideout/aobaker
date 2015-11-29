@@ -136,8 +136,6 @@ static Atlas_Output_Mesh * mesh_atlas_to_output(const HalfEdge::Mesh * mesh, con
 
 void Thekla::atlas_set_default_options(Atlas_Options * options) {
     if (options != NULL) {
-        // These are the default values we use on The Witness.
-
         options->charter = Atlas_Charter_Default;
         options->charter_options.witness.proxy_fit_metric_weight = 2.0f;
         options->charter_options.witness.roundness_metric_weight = 0.01f;
@@ -146,11 +144,9 @@ void Thekla::atlas_set_default_options(Atlas_Options * options) {
         options->charter_options.witness.texture_seam_metric_weight = 0.5f;
         options->charter_options.witness.max_chart_area = FLT_MAX;
         options->charter_options.witness.max_boundary_length = FLT_MAX;
-
         options->mapper = Atlas_Mapper_Default;
-
         options->packer = Atlas_Packer_Default;
-        options->packer_options.witness.packing_quality = 0;
+        options->packer_options.witness.packing_quality = 1;
         options->packer_options.witness.texel_area = 8;
         options->packer_options.witness.texel_padding = 1;
     }

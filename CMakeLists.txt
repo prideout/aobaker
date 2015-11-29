@@ -4,6 +4,11 @@ project(aobaker)
 add_subdirectory(thekla)
 add_subdirectory(vendor/poshlib)
 
+add_definitions(
+    -O3
+    -std=c++11
+    -Wall)
+
 include_directories(
     thekla/thekla
     vendor/tinyobj)
