@@ -101,7 +101,7 @@ int main(int argc, char * argv[])
 
     // Perform raytracing.
     raytrace("modified.obj", "object_coords.bin", "facet_normals.bin",
-        "result.png", 64);
+        "result.png", 128);
 
     return EXIT_SUCCESS;
 }

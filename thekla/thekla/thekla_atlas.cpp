@@ -414,15 +414,16 @@ void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_
         png.objspace[2].z = k.position[2];
         Vector3 A = png.objspace[1] - png.objspace[0];
         Vector3 B = png.objspace[2] - png.objspace[0];
-        Vector3 N = 0.5f * (normalize(cross(A, B)) + Vector3(1, 1, 1));
-        png.color[0] = N.x * 255;
-        png.color[1] = N.y * 255;
-        png.color[2] = N.z * 255;
+        Vector3 N1 = normalize(cross(A, B));
+        Vector3 N2 = 0.5f * (N1 + Vector3(1, 1, 1));
+        png.color[0] = N2.x * 255;
+        png.color[1] = N2.y * 255;
+        png.color[2] = N2.z * 255;
         Raster::drawTriangle(true, extents, true, triverts, pngSolidCallback, &png);
 
-        png.fpcolor[0] = N.x;
-        png.fpcolor[1] = N.y;
-        png.fpcolor[2] = N.z;
+        png.fpcolor[0] = N1.x;
+        png.fpcolor[1] = N1.y;
+        png.fpcolor[2] = N1.z;
         Raster::drawTriangle(true, extents, true, triverts, floatSolidCallback, &png);
     }
     printf("Writing facet_normals.png...\n");
