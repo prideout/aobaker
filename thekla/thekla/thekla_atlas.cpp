@@ -27,50 +27,36 @@ inline Atlas_Output_Mesh * set_error(Atlas_Error * error, Atlas_Error code) {
     return NULL;
 }
 
-
-
-static void input_to_mesh(const Atlas_Input_Mesh * input, HalfEdge::Mesh * mesh, Atlas_Error * error) {
-
+static void input_to_mesh(const Atlas_Input_Mesh * input, HalfEdge::Mesh * mesh, Atlas_Error * error)
+{
     Array<uint> canonicalMap;
     canonicalMap.reserve(input->vertex_count);
-
     for (int i = 0; i < input->vertex_count; i++) {
         const Atlas_Input_Vertex & input_vertex = input->vertex_array[i];
         const float * pos = input_vertex.position;
         const float * nor = input_vertex.normal;
         const float * tex = input_vertex.uv;
-
         HalfEdge::Vertex * vertex = mesh->addVertex(Vector3(pos[0], pos[1], pos[2]));
         vertex->nor.set(nor[0], nor[1], nor[2]);
         vertex->tex.set(tex[0], tex[1]);
-
         canonicalMap.append(input_vertex.first_colocal);
     }
-
     mesh->linkColocalsWithCanonicalMap(canonicalMap);
-
-
     const int face_count = input->face_count;
-
     int non_manifold_faces = 0;
     for (int i = 0; i < face_count; i++) {
         const Atlas_Input_Face & input_face = input->face_array[i];
-
         int v0 = input_face.vertex_index[0];
         int v1 = input_face.vertex_index[1];
         int v2 = input_face.vertex_index[2];
-
         HalfEdge::Face * face = mesh->addFace(v0, v1, v2);
         if (face != NULL) {
             face->material = input_face.material_index;
-        }
-        else {
+        } else {
             non_manifold_faces++;
         }
     }
-
     mesh->linkBoundary();
-
     if (non_manifold_faces != 0 && error != NULL) {
         *error = Atlas_Error_Invalid_Mesh_Non_Manifold;
     }
@@ -310,23 +296,8 @@ static bool floatSolidCallback(
     return true;
 }
 
-void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_Mesh * obj_mesh) {
-
-    for (int nvert = 0; nvert < obj_mesh->vertex_count; nvert++) {
-        Atlas_Input_Vertex& vert = obj_mesh->vertex_array[nvert];
-        vert.uv[0] = 0;
-        vert.uv[1] = 0;
-    }
-
-    // Replace uv's in the original mesh.
-    for (int nvert = 0; nvert < atlas_mesh->vertex_count; nvert++) {
-        int srcvert = atlas_mesh->vertex_array[nvert].xref;
-        float u = atlas_mesh->vertex_array[nvert].uv[0];
-        float v = atlas_mesh->vertex_array[nvert].uv[1];
-        obj_mesh->vertex_array[srcvert].uv[0] = u;
-        obj_mesh->vertex_array[srcvert].uv[1] = v;
-    }
-
+void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_Mesh * obj_mesh)
+{
     // Dump out the mutated mesh in simplified form and compute the AABB.
     printf("Writing modified.obj...\n");
     FILE* outobj = fopen("modified.obj", "wt");
@@ -334,23 +305,23 @@ void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_
     float vscale = 1.f / atlas_mesh->atlas_height;
     Vector3 minp(FLT_MAX);
     Vector3 maxp(FLT_MIN);
-    for (int nvert = 0; nvert < obj_mesh->vertex_count; nvert++) {
-        const Atlas_Input_Vertex& vert = obj_mesh->vertex_array[nvert];
-        minp.x = nv::min(vert.position[0], minp.x);
-        minp.y = nv::min(vert.position[1], minp.y);
-        minp.z = nv::min(vert.position[2], minp.z);
-        maxp.x = nv::max(vert.position[0], maxp.x);
-        maxp.y = nv::max(vert.position[1], maxp.y);
-        maxp.z = nv::max(vert.position[2], maxp.z);
-        fprintf(outobj, "v %f %f %f\n", vert.position[0], vert.position[1], vert.position[2]);
-        fprintf(outobj, "vt %f %f\n", vert.uv[0] * uscale, 1 - vert.uv[1] * vscale);
+    for (int nvert = 0; nvert < atlas_mesh->vertex_count; nvert++) {
+        const Atlas_Output_Vertex& overt = atlas_mesh->vertex_array[nvert];
+        const Atlas_Input_Vertex& ivert = obj_mesh->vertex_array[overt.xref];
+        minp.x = nv::min(ivert.position[0], minp.x);
+        minp.y = nv::min(ivert.position[1], minp.y);
+        minp.z = nv::min(ivert.position[2], minp.z);
+        maxp.x = nv::max(ivert.position[0], maxp.x);
+        maxp.y = nv::max(ivert.position[1], maxp.y);
+        maxp.z = nv::max(ivert.position[2], maxp.z);
+        fprintf(outobj, "v %f %f %f\n", ivert.position[0], ivert.position[1], ivert.position[2]);
+        fprintf(outobj, "vt %f %f\n", overt.uv[0] * uscale, 1 - overt.uv[1] * vscale);
     }
-    for (int nface = 0; nface < obj_mesh->face_count; nface++) {
-        const Atlas_Input_Face& face = obj_mesh->face_array[nface];
-        fprintf(outobj, "f %d/%d %d/%d %d/%d\n",
-            face.vertex_index[0]+1, face.vertex_index[0]+1,
-            face.vertex_index[1]+1, face.vertex_index[1]+1,
-            face.vertex_index[2]+1, face.vertex_index[2]+1);
+    for (int nface = 0; nface < atlas_mesh->index_count / 3; nface++) {
+        int a = atlas_mesh->index_array[nface * 3] + 1;
+        int b = atlas_mesh->index_array[nface * 3 + 1] + 1;
+        int c = atlas_mesh->index_array[nface * 3 + 2] + 1;
+        fprintf(outobj, "f %d/%d %d/%d %d/%d\n", a, a, b, b, c, c);
     }
     fclose(outobj);
 
