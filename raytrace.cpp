@@ -83,12 +83,10 @@ void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
     FILE* normsfile = fopen(normsbin, "rb");
     uint32_t size[2];
     fread(size, 1, sizeof(size), coordsfile);
-    uint32_t size2[2];
-    fread(size2, 1, sizeof(size2), normsfile);
-    assert(size[0] == size2[0] && size[1] == size2[1]);
+    fread(size, 1, sizeof(size), normsfile);
     unsigned char* results = (unsigned char*) calloc(size[0] * size[1], 1);
     unsigned char* presult = results;
-    const float E = 0.0001f;
+    const float E = 0.001f;
     float norm[3];
     float origin[3];
     uint32_t npixels = size[0] * size[1];
