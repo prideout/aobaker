@@ -419,12 +419,12 @@ void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_
         png.color[0] = N2.x * 255;
         png.color[1] = N2.y * 255;
         png.color[2] = N2.z * 255;
-        Raster::drawTriangle(true, extents, true, triverts, pngSolidCallback, &png);
+        Raster::drawTriangle(false, extents, true, triverts, pngSolidCallback, &png);
 
         png.fpcolor[0] = N1.x;
         png.fpcolor[1] = N1.y;
         png.fpcolor[2] = N1.z;
-        Raster::drawTriangle(true, extents, true, triverts, floatSolidCallback, &png);
+        Raster::drawTriangle(false, extents, true, triverts, floatSolidCallback, &png);
     }
     printf("Writing facet_normals.png...\n");
     stbi_write_png("facet_normals.png", width, height, 3, colors, 0);

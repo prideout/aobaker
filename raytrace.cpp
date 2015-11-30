@@ -13,11 +13,11 @@ using namespace std;
 using namespace tinyobj;
 
 // http://www.altdevblogaday.com/2012/05/03/generating-uniformly-distributed-points-on-sphere/
-void random_direction(float result[3])
+void random_direction(float* result)
 {
-    double z =  (double)rand() / (double)RAND_MAX*2.0 - 1.0;
-    double t =  (double)rand() / (double)RAND_MAX*2.0 * 3.14;
-    double r = sqrt(1.0-z*z);
+    float z = 2.0f * rand() / RAND_MAX - 1.0f;
+    float t = 2.0f * rand() / RAND_MAX * 3.14f;
+    float r = sqrt(1.0f - z * z);
     result[0] = r * cos(t);
     result[1] = r * sin(t);
     result[2] = z;
@@ -130,6 +130,42 @@ void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
         *presult++ = 255 - 255.0f * nhits / nsamples;
     }
     fclose(coordsfile);
+
+    // Dilate the image by 2 pixels to allow bilinear texturing near seams.
+    // Note that this still allows seams when mipmapping, unless mipmap levels
+    // are generated very carefully.
+    for (int step = 0; step < 2; step++) {
+        fseek(normsfile, 0, SEEK_SET);
+        fread(size, 1, sizeof(size), normsfile);
+        unsigned char* tmp = (unsigned char*) calloc(size[0] * size[1], 1);
+        for (int y = 0; y < size[1]; y++) {
+            for (int x = 0; x < size[0]; x++) {
+                fread(norm, 1, sizeof(float) * 3, normsfile);
+                int center = x + y * size[0];
+                tmp[center] = results[center];
+                if (norm[0] == 0 && norm[1] == 0 && norm[2] == 0 &&
+                    results[center] == 0) {
+                    for (int k = 0; k < 9; k++) {
+                        int i = (k / 3) - 1, j = (k % 3) - 1;
+                        if (i == 0 && j == 0) {
+                            continue;
+                        }
+                        i += x; j += y;
+                        if (i < 0 || j < 0 || i >= size[0] || j >= size[1]) {
+                            continue;
+                        }
+                        int loc = i + j * size[0];
+                        if (results[loc] > 0) {
+                            tmp[center] = results[loc];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        std::swap(results, tmp);
+        free(tmp);
+    }
     fclose(normsfile);
 
     // Write the image.
