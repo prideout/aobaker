@@ -1,11 +1,13 @@
 [![Build Status](https://travis-ci.org/prideout/aobaker.svg?branch=master)](https://travis-ci.org/prideout/aobaker)
 
-This little tool does the following:
+This little public domain tool does the following:
 
 - Generates suprisingly reasonable UV's for an arbitrary mesh.
 - Creates a texture representing ambient occlusion.
 
 The first bullet uses Thekla's parameterization code; the second bullet uses Intel's embree library for raytracing.
+
+Note that [libigl](http://libigl.github.io/libigl) can also do this kind of stuff, which is protected by the Mozilla Public License.
 
 ---
 
