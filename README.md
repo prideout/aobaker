@@ -28,5 +28,5 @@ $ cmake --build build  # Build the Makefile
 
 You can now invoke the tool on the test mesh:
 ```bash
-$ build/aobaker torii.obj
+$ build/aobaker suzanne.obj
 ```

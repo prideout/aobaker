@@ -1,5 +1,4 @@
 #include <thekla_atlas.h>
-#include <embree2/rtcore.h>
 
 #include <cstdio>
 #include <cassert>
@@ -9,6 +8,9 @@
 
 using namespace Thekla;
 using namespace std;
+
+void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
+    const char* resultpng);
 
 static Atlas_Input_Mesh* obj_mesh_load(const char* filename)
 {
@@ -96,6 +98,10 @@ int main(int argc, char * argv[])
     // Free meshes.
     obj_mesh_free(obj_mesh);
     atlas_free(output_mesh);
+
+    // Perform raytracing.
+    raytrace("modified.obj", "object_coords.bin", "facet_normals.bin",
+        "result.png");
 
     return EXIT_SUCCESS;
 }

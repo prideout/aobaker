@@ -28,10 +28,12 @@ link_directories(
 
 include_directories(
     thekla/thekla
+    vendor/stb
     vendor/tinyobj)
 
 add_executable(
     aobaker
+    raytrace.cpp
     aobaker.cpp)
 
 target_link_libraries(

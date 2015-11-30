@@ -48,24 +48,8 @@ static void computeBoundingBox(Chart * chart, Vector2 * majorAxis, Vector2 * min
         }
     }
 
-    // This is not valid anymore. The chart mesh may have multiple boundaries!
-    /*const HalfEdge::Vertex * vertex = findBoundaryVertex(chart->chartMesh());
-
-    // Traverse boundary.
-    const HalfEdge::Edge * const firstEdge = vertex->edge();
-    const HalfEdge::Edge * edge = firstEdge;
-    do {
-        vertex = edge->vertex();
-
-        nvDebugCheck (vertex->isBoundary());
-        points.append(vertex->tex);
-
-        edge = edge->next();
-    } while (edge != firstEdge);*/
-
-#if 1
     Array<Vector2> hull;
-    
+
     convexHull(points, hull, 0.00001f);
 
     // @@ Ideally I should use rotating calipers to find the best box. Using brute force for now.
@@ -101,7 +85,7 @@ static void computeBoundingBox(Chart * chart, Vector2 * majorAxis, Vector2 * min
            if (y < box_min.y) box_min.y = y;
            if (y > box_max.y) box_max.y = y;
         }
-    
+
         // Compute box area.
         float area = (box_max.x - box_min.x) * (box_max.y - box_min.y);
 
@@ -112,19 +96,6 @@ static void computeBoundingBox(Chart * chart, Vector2 * majorAxis, Vector2 * min
             best_axis = axis;
         }
     }
-
-    // Make sure the box contains all the input points since the convex hull is not 100% accurate.
-    /*const uint pointCount = points.count();
-    for (uint v = 0; v < pointCount; v++) {
-
-        Vector2 point = points[v];
-
-        float x = dot(best_axis, point);
-        if (x < best_min.x) best_min.x = x;
-
-        float y = dot(Vector2(-best_axis.y, best_axis.x), point);
-        if (y < best_min.y) best_min.y = y;
-    }*/
 
     // Consider all points, not only boundary points, in case the input chart is malformed.
     for (uint i = 0; i < vertexCount; i++) {
@@ -144,116 +115,6 @@ static void computeBoundingBox(Chart * chart, Vector2 * majorAxis, Vector2 * min
     *minorAxis = Vector2(-best_axis.y, best_axis.x);
     *minCorner = best_min;
     *maxCorner = best_max;
-
-#else
-    // Approximate implementation: try 16 different directions and keep the best.
-
-    const uint N = 16;
-    Vector2 axis[N];
-
-    float minAngle = 0;
-    float maxAngle = PI / 2;
-
-    int best;
-    Vector2 mins[N];
-    Vector2 maxs[N];
-
-    const int iterationCount = 1;
-    for (int j = 0; j < iterationCount; j++)
-    {
-        // Init predefined directions.
-        for (int i = 0; i < N; i++)
-        {
-            float angle = lerp(minAngle, maxAngle, float(i)/N);
-            axis[i].set(cosf(angle), sinf(angle));
-        }
-
-        // Compute box for each direction.
-        for (int i = 0; i < N; i++)
-        {
-            mins[i].set(FLT_MAX, FLT_MAX);
-            maxs[i].set(-FLT_MAX, -FLT_MAX);
-        }
-
-        for (uint p = 0; p < points.count(); p++)
-        {
-            Vector2 point = points[p];
-
-            for (int i = 0; i < N; i++)
-            {
-               float x = dot(axis[i], point);
-               if (x < mins[i].x) mins[i].x = x;
-               if (x > maxs[i].x) maxs[i].x = x;
-
-               float y = dot(Vector2(-axis[i].y, axis[i].x), point);
-               if (y < mins[i].y) mins[i].y = y;
-               if (y > maxs[i].y) maxs[i].y = y;
-            }
-        }
-
-        // Find box with minimum area.
-        best = -1;
-        int second_best = -1;
-        float best_area = FLT_MAX;
-        float second_best_area = FLT_MAX;
-        
-        for (int i = 0; i < N; i++)
-        {
-            float area = (maxs[i].x - mins[i].x) * (maxs[i].y - mins[i].y);
-
-            if (area < best_area)
-            {
-                second_best_area = best_area;
-                second_best = best;
-
-                best_area = area;
-                best = i;
-            }
-            else if (area < second_best_area)
-            {
-                second_best_area = area;
-                second_best = i;
-            }
-        }
-        nvDebugCheck(best != -1);
-        nvDebugCheck(second_best != -1);
-        nvDebugCheck(best != second_best);
-
-        if (j != iterationCount-1)
-        {
-            // Handle wrap-around during the first iteration.
-            if (j == 0) {
-                if (best == 0 && second_best == N-1) best = N;
-                if (best == N-1 && second_best == 0) second_best = N;
-            }
-
-            if (best < second_best) swap(best, second_best);
-
-            // Update angles.
-            float deltaAngle = (maxAngle - minAngle) / N;
-            maxAngle = minAngle + (best - 0.5f)  * deltaAngle;
-            minAngle = minAngle + (second_best + 0.5f) * deltaAngle;
-        }
-    }
-
-    // Compute major and minor axis, and origin.
-    *majorAxis = axis[best];
-    *minorAxis = Vector2(-axis[best].y, axis[best].x);
-    *origin = mins[best];
-
-    // @@ If the parameterization is invalid, we could have an interior vertex outside the boundary.
-    // @@ In that case the returned bounding box would be incorrect. Compute updated bounds here.
-    /*for (uint p = 0; p < points.count(); p++)
-    {
-        Vector2 point = points[p];
-
-        for (int i = 0; i < N; i++)
-        {
-           float x = dot(*majorAxis, point);
-           float y = dot(*minorAxis, point);
-        }
-    }*/
-#endif
 }
 
 
@@ -269,12 +130,12 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
 
     Array<Vector2> chartExtents;
     chartExtents.resize(chartCount);
-    
+
     float meshArea = 0;
     for (uint c = 0; c < chartCount; c++)
     {
         Chart * chart = m_atlas->chartAt(c);
-        
+
         if (!chart->isDisk()) {
             chartOrderArray[c] = 0;
 
@@ -285,7 +146,6 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
         // Compute surface area to sort charts.
         float chartArea = computeSurfaceArea(chart->chartMesh()) * chart->scale;
         meshArea += chartArea;
-        //chartOrderArray[c] = chartArea;
 
         // Compute chart scale
         float parametricArea = computeParametricArea(chart->chartMesh());
@@ -301,7 +161,7 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
         computeBoundingBox(chart, &majorAxis, &minorAxis, &origin, &end);
 
         nvCheck(isFinite(majorAxis) && isFinite(minorAxis) && isFinite(origin));
-        
+
         // Sort charts by perimeter. @@ This is sometimes producing somewhat unexpected results. Is this right?
         chartOrderArray[c] = ((end.x - origin.x) + (end.y - origin.y)) * scale;
 
@@ -313,7 +173,6 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
         {
             HalfEdge::Vertex * vertex = mesh->vertexAt(i);
 
-            //Vector2 t = vertex->tex - origin;
             Vector2 tmp;
             tmp.x = dot(vertex->tex, majorAxis);
             tmp.y = dot(vertex->tex, minorAxis);
@@ -327,7 +186,6 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
                 nvDebug("minorAxis: %f %f\n", minorAxis.x, minorAxis.y);
                 nvDebugBreak();
             }
-            //nvCheck(tmp.x >= 0 && tmp.y >= 0);
 
             vertex->tex = tmp;
 
@@ -373,7 +231,6 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
         m_bitmap.resize(approximateExtent, approximateExtent, false);
     }
 
-    
     int w = 0;
     int h = 0;
 
@@ -388,7 +245,7 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
 
         BitMap chart_bitmap(iceil(chartExtents[c].x) + padding * 2, iceil(chartExtents[c].y) + padding * 2);
         chart_bitmap.clearAll();
-        
+
         drawChartBitmap(chart, &chart_bitmap, padding);
 
         int best_x, best_y;
@@ -396,32 +253,17 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
         int best_r;
         findChartLocation(quality, &chart_bitmap, chartExtents[c], w, h, &best_x, &best_y, &best_cw, &best_ch, &best_r);
 
-        /*if (w < best_x + best_cw || h < best_y + best_ch)
-        {
-            nvDebug("Resize extents to (%d, %d).\n", best_x + best_cw, best_y + best_ch);
-        }*/
-
         // Update parametric extents.
         w = max(w, best_x + best_cw + padding);
         h = max(h, best_y + best_ch + padding);
 
         // Resize bitmap if necessary.
-        if (uint(w) > m_bitmap.width() || uint(h) > m_bitmap.height())
-        {
-            //nvDebug("Resize bitmap (%d, %d).\n", nextPowerOfTwo(w), nextPowerOfTwo(h));
+        if (uint(w) > m_bitmap.width() || uint(h) > m_bitmap.height()) {
             m_bitmap.resize(nextPowerOfTwo(w), nextPowerOfTwo(h), false);
         }
 
-        //nvDebug("Add chart at (%d, %d).\n", best_x, best_y);
-
-#if _DEBUG
-        checkCanAddChart(chart, w, h, best_x, best_y, best_r);
-#endif
-
         // Add chart.
         addChart(chart, w, h, best_x, best_y, best_r);
-
-        //float best_angle = 2 * PI * best_r;
 
         // Translate and rotate chart texture coordinates.
         HalfEdge::Mesh * mesh = chart->chartMesh();
@@ -432,23 +274,24 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
 
             Vector2 t = vertex->tex;
             if (best_r) swap(t.x, t.y);
-            //vertex->tex.x = best_x + t.x * cosf(best_angle) - t.y * sinf(best_angle);
-            //vertex->tex.y = best_y + t.x * sinf(best_angle) + t.y * cosf(best_angle);
             vertex->tex.x = best_x + t.x;
             vertex->tex.y = best_y + t.y;
 
             nvCheck(vertex->tex.x >= 0 && vertex->tex.y >= 0);
         }
-
-#if DEBUG_OUTPUT
-        //StringBuilder fileName;
-        //fileName.format("debug_packer_%d.tga", i);
-        //Bitmap(fileName.str(), m_bitmap, w, h);
-#endif
     }
 
     w -= padding - 1; // Leave one pixel border!
     h -= padding - 1;
+
+    // This is not the right way to force a square POT texture.
+    #if FORCE_POT
+    w = nextPowerOfTwo(w);
+    h = nextPowerOfTwo(h);
+    w = max(w, h);
+    h = max(w, h);
+    m_bitmap.resize(w, h, false);
+    #endif
 
     m_width = max(0, w);
     m_height = max(0, h);
@@ -697,9 +540,7 @@ void AtlasPacker::checkCanAddChart(const Chart * chart, int w, int h, int x, int
     for (uint f = 0; f < faceCount; f++)
     {
         const HalfEdge::Face * face = chart->chartMesh()->faceAt(f);
-        
         Vector2 vertices[4];
-
         uint edgeCount = 0;
         for (HalfEdge::Face::ConstEdgeIterator it(face->edges()); !it.isDone(); it.advance())
         {
@@ -735,7 +576,6 @@ void AtlasPacker::addChart(const Chart * chart, int w, int h, int x, int y, int 
     for (uint f = 0; f < faceCount; f++)
     {
         const HalfEdge::Face * face = chart->chartMesh()->faceAt(f);
-        
         Vector2 vertices[4];
 
         uint edgeCount = 0;

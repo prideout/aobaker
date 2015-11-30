@@ -308,9 +308,10 @@ static bool floatSolidCallback(
     float* floats = ((PngShaderData*) param)->floats;
     float* fpcolor = ((PngShaderData*) param)->fpcolor;
     int width = ((PngShaderData*) param)->width;
-    int loc = x * 2 + y * 2 * width;
+    int loc = x * 3 + y * 3 * width;
     floats[loc++] = fpcolor[0];
     floats[loc++] = fpcolor[1];
+    floats[loc++] = fpcolor[2];
     return true;
 }
 
@@ -341,7 +342,7 @@ void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_
         maxp.y = nv::max(vert.position[1], maxp.y);
         maxp.z = nv::max(vert.position[2], maxp.z);
         fprintf(outobj, "v %f %f %f\n", vert.position[0], vert.position[1], vert.position[2]);
-        fprintf(outobj, "vt %f %f\n", vert.uv[0] * uscale, vert.uv[1] * vscale);
+        fprintf(outobj, "vt %f %f\n", vert.uv[0] * uscale, 1 - vert.uv[1] * vscale);
     }
     for (int nface = 0; nface < obj_mesh->face_count; nface++) {
         const Atlas_Input_Face& face = obj_mesh->face_array[nface];
@@ -357,8 +358,8 @@ void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_
     int width = atlas_mesh->atlas_width;
     int height = atlas_mesh->atlas_height;
     const Vector2 extents(width, height);
-    unsigned char* colors = (unsigned char*) calloc(width * height, 3);
-    float* floats = (float*) calloc(width * height, 4 * 3);
+    unsigned char* colors = (unsigned char*) calloc(width * height * 3, 1);
+    float* floats = (float*) calloc(width * height * sizeof(float) * 3, 1);
     const int* patlasIndex = atlas_mesh->index_array;
     Vector2 triverts[3];
     PngShaderData png;
@@ -415,6 +416,7 @@ void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_
     fclose(objbin);
 
     // Create a PNG file representing facet normals.
+    memset(floats, 0, width * height * sizeof(float) * 3);
     patlasIndex = atlas_mesh->index_array;
     for (int nface = 0; nface < atlas_mesh->index_count / 3; nface++) {
         Atlas_Output_Vertex& a = atlas_mesh->vertex_array[*patlasIndex++];
@@ -448,6 +450,7 @@ void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_
 
         png.fpcolor[0] = N.x;
         png.fpcolor[1] = N.y;
+        png.fpcolor[2] = N.z;
         Raster::drawTriangle(true, extents, true, triverts, floatSolidCallback, &png);
     }
     printf("Writing facet_normals.png...\n");
@@ -456,7 +459,7 @@ void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_
     FILE* normbin = fopen("facet_normals.bin", "wb");
     fwrite(&width, 1, 4, normbin);
     fwrite(&height, 1, 4, normbin);
-    fwrite(floats, 1, width * height * 4 * 2, normbin);
+    fwrite(floats, 1, width * height * sizeof(float) * 3, normbin);
     fclose(normbin);
 
     free(colors);
