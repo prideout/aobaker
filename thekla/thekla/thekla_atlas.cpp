@@ -76,8 +76,8 @@ static void input_to_mesh(const Atlas_Input_Mesh * input, HalfEdge::Mesh * mesh,
     }
 }
 
-static Atlas_Output_Mesh * mesh_atlas_to_output(const HalfEdge::Mesh * mesh, const Atlas & atlas, Atlas_Error * error) {
-
+static Atlas_Output_Mesh * mesh_atlas_to_output(const HalfEdge::Mesh * mesh, const Atlas & atlas, Atlas_Error * error)
+{
     Atlas_Output_Mesh * output = new Atlas_Output_Mesh;
 
     // Allocate vertices.
@@ -90,14 +90,11 @@ static Atlas_Output_Mesh * mesh_atlas_to_output(const HalfEdge::Mesh * mesh, con
     for (int i = 0; i < chart_count; i++) {
         const Chart * chart = atlas.chartAt(i);
         uint vertexOffset = atlas.vertexCountBeforeChartAt(i);
-
         const uint chart_vertex_count = chart->vertexCount();
         for (uint v = 0; v < chart_vertex_count; v++) {
-            Atlas_Output_Vertex & output_vertex = output->vertex_array[vertexOffset + v]; 
-
+            Atlas_Output_Vertex & output_vertex = output->vertex_array[vertexOffset + v];
             uint original_vertex = chart->mapChartVertexToOriginalVertex(v);
             output_vertex.xref = original_vertex;
-
             Vector2 uv = chart->chartMesh()->vertexAt(v)->tex;
             output_vertex.uv[0] = uv.x;
             output_vertex.uv[1] = uv.y;
@@ -108,24 +105,20 @@ static Atlas_Output_Mesh * mesh_atlas_to_output(const HalfEdge::Mesh * mesh, con
     output->index_count = face_count * 3;
     output->index_array = new int[face_count * 3];
 
-        // Set face indices.
+    // Set face indices.
     for (int f = 0; f < face_count; f++) {
         uint c = atlas.faceChartAt(f);
         uint i = atlas.faceIndexWithinChartAt(f);
         uint vertexOffset = atlas.vertexCountBeforeChartAt(c);
-
         const Chart * chart = atlas.chartAt(c);
         nvDebugCheck(chart->faceAt(i) == f);
-
         const HalfEdge::Face * face = chart->chartMesh()->faceAt(i);
         const HalfEdge::Edge * edge = face->edge;
-
         output->index_array[3*f+0] = vertexOffset + edge->vertex->id;
         output->index_array[3*f+1] = vertexOffset + edge->next->vertex->id;
         output->index_array[3*f+2] = vertexOffset + edge->next->next->vertex->id;
     }
 
-    // @@ Init these!
     *error = Atlas_Error_Not_Implemented;
     output->atlas_width = atlas.width();
     output->atlas_height = atlas.height();
@@ -134,7 +127,8 @@ static Atlas_Output_Mesh * mesh_atlas_to_output(const HalfEdge::Mesh * mesh, con
 }
 
 
-void Thekla::atlas_set_default_options(Atlas_Options * options) {
+void Thekla::atlas_set_default_options(Atlas_Options * options)
+{
     if (options != NULL) {
         options->charter = Atlas_Charter_Default;
         options->charter_options.witness.proxy_fit_metric_weight = 2.0f;
@@ -153,7 +147,8 @@ void Thekla::atlas_set_default_options(Atlas_Options * options) {
 }
 
 
-Atlas_Output_Mesh * Thekla::atlas_generate(const Atlas_Input_Mesh * input, const Atlas_Options * options, Atlas_Error * error) {
+Atlas_Output_Mesh * Thekla::atlas_generate(const Atlas_Input_Mesh * input, const Atlas_Options * options, Atlas_Error * error)
+{
     // Validate args.
     if (input == NULL || options == NULL || error == NULL) return set_error(error, Atlas_Error_Invalid_Args);
 
@@ -316,6 +311,12 @@ static bool floatSolidCallback(
 }
 
 void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_Mesh * obj_mesh) {
+
+    for (int nvert = 0; nvert < obj_mesh->vertex_count; nvert++) {
+        Atlas_Input_Vertex& vert = obj_mesh->vertex_array[nvert];
+        vert.uv[0] = 0;
+        vert.uv[1] = 0;
+    }
 
     // Replace uv's in the original mesh.
     for (int nvert = 0; nvert < atlas_mesh->vertex_count; nvert++) {

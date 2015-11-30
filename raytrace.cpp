@@ -24,7 +24,7 @@ void random_direction(float result[3])
 }
 
 void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
-    const char* resultpng)
+    const char* resultpng, int nsamples)
 {
     // Intel says to do this, so we're doing it.
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -88,7 +88,7 @@ void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
     assert(size[0] == size2[0] && size[1] == size2[1]);
     unsigned char* results = (unsigned char*) calloc(size[0] * size[1], 1);
     unsigned char* presult = results;
-    const float E = 0.001f;
+    const float E = 0.0001f;
     float norm[3];
     float origin[3];
     uint32_t npixels = size[0] * size[1];
@@ -102,28 +102,26 @@ void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
         fread(origin, 1, sizeof(float) * 3, coordsfile);
         fread(norm, 1, sizeof(float) * 3, normsfile);
         if (norm[0] == 0 && norm[1] == 0 && norm[2] == 0) {
-            *presult++ = 128;
+            *presult++ = 0;
             continue;
         }
 
-        origin[0] += norm[0] * E;
-        origin[1] += norm[1] * E;
-        origin[2] += norm[2] * E;
+        ray.org[0] = origin[0];
+        ray.org[1] = origin[1];
+        ray.org[2] = origin[2];
 
-        int nsamples = 64;
         int nhits = 0;
         for (int nsamp = 0; nsamp < nsamples; nsamp++) {
-            float dotp = -1;
-            while (dotp < 0) {
-                random_direction(ray.dir);
-                dotp = norm[0] * ray.dir[0] +
-                    norm[1] * ray.dir[1] +
-                    norm[2] * ray.dir[2];
+            random_direction(ray.dir);
+            float dotp = norm[0] * ray.dir[0] +
+                norm[1] * ray.dir[1] +
+                norm[2] * ray.dir[2];
+            if (dotp < 0) {
+                ray.dir[0] = -ray.dir[0];
+                ray.dir[1] = -ray.dir[1];
+                ray.dir[2] = -ray.dir[2];
             }
-            ray.org[0] = origin[0];
-            ray.org[1] = origin[1];
-            ray.org[2] = origin[2];
-            ray.tnear = 0.f;
+            ray.tnear = E;
             ray.tfar = FLT_MAX;
             ray.geomID = RTC_INVALID_GEOMETRY_ID;
             rtcOccluded(scene, ray);

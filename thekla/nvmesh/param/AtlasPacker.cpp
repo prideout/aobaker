@@ -132,8 +132,7 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
     chartExtents.resize(chartCount);
 
     float meshArea = 0;
-    for (uint c = 0; c < chartCount; c++)
-    {
+    for (uint c = 0; c < chartCount; c++) {
         Chart * chart = m_atlas->chartAt(c);
 
         if (!chart->isDisk()) {
@@ -150,8 +149,7 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
         // Compute chart scale
         float parametricArea = computeParametricArea(chart->chartMesh());
         float scale = (chartArea / parametricArea) * texelsPerUnit;
-        if (parametricArea < NV_EPSILON)
-        {
+        if (parametricArea < NV_EPSILON) {
             scale = 0;
         }
         nvCheck(isFinite(scale));
@@ -212,8 +210,6 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
         chartExtents[c] = extents;
     }
 
-    //nvDebug("Sorting charts.\n");
-
     // Sort charts by area.
     m_radix.sort(chartOrderArray);
     const uint32 * ranks = m_radix.ranks();
@@ -222,8 +218,6 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
     float texelCount = meshArea * square(texelsPerUnit) / 0.75f; // Assume 75% utilization.
     if (texelCount < 1) texelCount = 1;
     uint approximateExtent = nextPowerOfTwo(uint(sqrtf(texelCount)));
-
-    //nvDebug("Init bitmap.\n");
 
     // Init bit map.
     m_bitmap.clearAll();
@@ -240,7 +234,7 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
         uint c = ranks[chartCount - i - 1]; // largest chart first
 
         Chart * chart = m_atlas->chartAt(c);
-
+ 
         if (!chart->isDisk()) continue;
 
         BitMap chart_bitmap(iceil(chartExtents[c].x) + padding * 2, iceil(chartExtents[c].y) + padding * 2);
@@ -268,15 +262,12 @@ void AtlasPacker::packCharts(int quality, float texelsPerUnit, int padding)
         // Translate and rotate chart texture coordinates.
         HalfEdge::Mesh * mesh = chart->chartMesh();
         const uint vertexCount = mesh->vertexCount();
-        for (uint v = 0; v < vertexCount; v++)
-        {
+        for (uint v = 0; v < vertexCount; v++) {
             HalfEdge::Vertex * vertex = mesh->vertexAt(v);
-
             Vector2 t = vertex->tex;
             if (best_r) swap(t.x, t.y);
             vertex->tex.x = best_x + t.x;
             vertex->tex.y = best_y + t.y;
-
             nvCheck(vertex->tex.x >= 0 && vertex->tex.y >= 0);
         }
     }

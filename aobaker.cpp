@@ -10,7 +10,7 @@ using namespace Thekla;
 using namespace std;
 
 void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
-    const char* resultpng);
+    const char* resultpng, int nsamples);
 
 static Atlas_Input_Mesh* obj_mesh_load(const char* filename)
 {
@@ -101,7 +101,7 @@ int main(int argc, char * argv[])
 
     // Perform raytracing.
     raytrace("modified.obj", "object_coords.bin", "facet_normals.bin",
-        "result.png");
+        "result.png", 16);
 
     return EXIT_SUCCESS;
 }

@@ -5,4 +5,4 @@ script:
     - brew install embree tbb cmake
     - cmake -H. -Bbuild
     - cmake --build build
-    - build/aobaker torii.obj
+    - build/aobaker suzanne.obj
