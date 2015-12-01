@@ -7,7 +7,11 @@ This little public domain tool does the following:
 
 The first bullet uses Thekla's parameterization code; the second bullet uses Intel's embree library for raytracing.
 
-Note that [libigl](http://libigl.github.io/libigl) can also do this kind of stuff, which is protected by the Mozilla Public License.
+**Similar Tools**
+
+[libigl](http://libigl.github.io/libigl) can do mesh parameterization and ambient occlusion baking.  It is protected by the Mozilla Public License.
+
+Texture coordinates can be generated using Microsoft's open source [UVAtlas](https://github.com/Microsoft/UVAtlas) tool, which is a somewhat Windows-oriented project.
 
 ---
 
