@@ -32,7 +32,8 @@ void random_direction(float* result)
 }
 
 void raytrace(const char* meshobj, int size[2], const float* coordsdata,
-    const float* normsdata, const char* resultpng, int nsamples)
+    const float* normsdata, const uint8_t* chartids, const char* resultpng,
+    int nsamples)
 {
     // Intel says to do this, so we're doing it.
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -174,7 +175,20 @@ void raytrace(const char* meshobj, int size[2], const float* coordsdata,
 
     // Write the image.
     printf("Writing %s...\n", resultpng);
-    stbi_write_png(resultpng, size[0], size[1], 1, results, 0);
+    if (chartids) {
+        uint8_t* merged = (uint8_t*) malloc(size[0] * size[1] * 2);
+        uint8_t* pmerged = merged;
+        uint8_t const* presults = results;
+        uint8_t const* pchartids = chartids;
+        for (int i = 0; i < size[0] * size[1]; i++) {
+            *pmerged++ = *presults++;
+            *pmerged++ = 255 - (*pchartids++);
+        }
+        stbi_write_png(resultpng, size[0], size[1], 2, merged, 0);
+        free(merged);
+    } else {
+        stbi_write_png(resultpng, size[0], size[1], 1, results, 0);
+    }
     free(results);
 
     // Free all embree data.

@@ -1,5 +1,5 @@
 
-// Thekla Atlas Generator
+#include <stdint.h>
 
 namespace Thekla {
 
@@ -44,7 +44,7 @@ struct Atlas_Options {
         struct {
             int packing_quality;
             float texel_area;       // This is not really texel area, but 1 / texel width?
-            int texel_padding; 
+            int texel_padding;
         } witness;
     } packer_options;
 };
@@ -71,6 +71,7 @@ struct Atlas_Input_Mesh {
 struct Atlas_Output_Vertex {
     float uv[2];
     int xref;   // Index of input vertex from which this output vertex originated.
+    int chart_index;
 };
 
 struct Atlas_Output_Mesh {
@@ -105,6 +106,7 @@ void atlas_dump(
     bool gbuffer,
     float** pcoordsdata,
     float** pnormsdata,
+    uint8_t** pchartids,
     int size[2]);
 
 void atlas_free(Atlas_Output_Mesh * output);
