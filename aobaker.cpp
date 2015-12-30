@@ -9,8 +9,8 @@
 using namespace Thekla;
 using namespace std;
 
-void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
-    const char* resultpng, int nsamples);
+void raytrace(const char* meshobj, int size[2], const float* coordsdata,
+    const float* normsdata, const char* resultpng, int nsamples);
 
 static Atlas_Input_Mesh* obj_mesh_load(const char* filename)
 {
@@ -94,16 +94,21 @@ int aobaker_bake(
     printf("Atlas mesh has %d verts\n", output_mesh->vertex_count);
     printf("Atlas mesh has %d triangles\n", output_mesh->index_count / 3);
 
-    // Write a bunch of files to disk.
-    atlas_dump(output_mesh, obj_mesh, outputmesh, gbuffer);
+    // Transform the data produced by the Thekla library.
+    float* coordsdata;
+    float* normsdata;
+    int size[2];
+    atlas_dump(output_mesh, obj_mesh, outputmesh, gbuffer, &coordsdata,
+        &normsdata, size);
 
     // Free meshes.
     obj_mesh_free(obj_mesh);
     atlas_free(output_mesh);
 
     // Perform raytracing.
-    raytrace(outputmesh, "object_coords.bin", "facet_normals.bin",
-        outputatlas, nsamples);
+    raytrace(outputmesh, size, coordsdata, normsdata, outputatlas, nsamples);
+    free(coordsdata);
+    free(normsdata);
 
     return EXIT_SUCCESS;
 }

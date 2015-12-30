@@ -295,7 +295,10 @@ void Thekla::atlas_dump(
     const Atlas_Output_Mesh * atlas_mesh,
     const Atlas_Input_Mesh * obj_mesh,
     const char* oobjmesh,
-    bool gbuffer)
+    bool gbuffer,
+    float** pcoordsdata,
+    float** pnormsdata,
+    int size[2])
 {
     // Dump out the mutated mesh in simplified form and compute the AABB.
     printf("Writing %s...\n", oobjmesh);
@@ -324,7 +327,7 @@ void Thekla::atlas_dump(
     }
     fclose(outobj);
 
-    // Create a PNG file representing the charts, with color representing the
+    // Create an image representing the charts, with color representing the
     // approximate world-space position of each source vertex.
     int width = atlas_mesh->atlas_width;
     int height = atlas_mesh->atlas_height;
@@ -381,15 +384,10 @@ void Thekla::atlas_dump(
         printf("Writing object_coords.png...\n");
         stbi_write_png("object_coords.png", width, height, 3, colors, 0);
     }
-    printf("Writing object_coords.bin...\n");
-    FILE* objbin = fopen("object_coords.bin", "wb");
-    fwrite(&width, 1, 4, objbin);
-    fwrite(&height, 1, 4, objbin);
-    fwrite(floats, 1, width * height * 4 * 3, objbin);
-    fclose(objbin);
+    *pcoordsdata = floats;
 
-    // Create a PNG file representing facet normals.
-    memset(floats, 0, width * height * sizeof(float) * 3);
+    // Create an image representing facet normals.
+    png.floats = floats = (float*) calloc(width * height * sizeof(float) * 3, 1);
     patlasIndex = atlas_mesh->index_array;
     for (int nface = 0; nface < atlas_mesh->index_count / 3; nface++) {
         Atlas_Output_Vertex& a = atlas_mesh->vertex_array[*patlasIndex++];
@@ -427,21 +425,14 @@ void Thekla::atlas_dump(
         png.fpcolor[2] = N1.z;
         Raster::drawTriangle(true, extents, true, triverts, floatSolidCallback, &png);
     }
-
     if (gbuffer) {
         printf("Writing facet_normals.png...\n");
         stbi_write_png("facet_normals.png", width, height, 3, colors, 0);
     }
-
-    printf("Writing facet_normals.bin...\n");
-    FILE* normbin = fopen("facet_normals.bin", "wb");
-    fwrite(&width, 1, 4, normbin);
-    fwrite(&height, 1, 4, normbin);
-    fwrite(floats, 1, width * height * sizeof(float) * 3, normbin);
-    fclose(normbin);
-
+    size[0] = width;
+    size[1] = height;
+    *pnormsdata = floats;
     free(colors);
-    free(floats);
 }
 
 

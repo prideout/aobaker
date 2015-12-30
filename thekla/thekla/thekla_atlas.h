@@ -102,7 +102,10 @@ void atlas_dump(
     const Atlas_Output_Mesh * atlas_mesh,
     const Atlas_Input_Mesh * object_mesh,
     const char* oobjmesh,
-    bool gbuffer);
+    bool gbuffer,
+    float** pcoordsdata,
+    float** pnormsdata,
+    int size[2]);
 
 void atlas_free(Atlas_Output_Mesh * output);
 

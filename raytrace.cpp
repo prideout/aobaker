@@ -31,8 +31,8 @@ void random_direction(float* result)
     result[2] = z;
 }
 
-void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
-    const char* resultpng, int nsamples)
+void raytrace(const char* meshobj, int size[2], const float* coordsdata,
+    const float* normsdata, const char* resultpng, int nsamples)
 {
     // Intel says to do this, so we're doing it.
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -81,25 +81,12 @@ void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
     indices.shrink_to_fit();
     rtcCommit(scene);
 
-    // Slurp the coordinate and normals data.
-    FILE* coordsfile = fopen(coordsbin, "rb");
-    FILE* normsfile = fopen(normsbin, "rb");
-    int32_t size[2];
-    fread(size, 1, sizeof(size), coordsfile);
-    fread(size, 1, sizeof(size), normsfile);
-    uint32_t npixels = size[0] * size[1];
-    float* coordsdata = (float*) malloc(sizeof(float) * 3 * npixels);
-    fread(coordsdata, 1, sizeof(float) * 3 * npixels, coordsfile);
-    float* normsdata = (float*) malloc(sizeof(float) * 3 * npixels);
-    fread(normsdata, 1, sizeof(float) * 3 * npixels, normsfile);
-    fclose(coordsfile);
-    fclose(normsfile);
-
     // Iterate over each pixel in the light map, row by row.
     printf("Rendering ambient occlusion (%d threads)...\n",
         omp_get_max_threads());
     double begintime = omp_get_wtime();
     unsigned char* results = (unsigned char*) calloc(size[0] * size[1], 1);
+    const uint32_t npixels = size[0] * size[1];
     const float E = 0.001f;
 #pragma omp parallel
 {
@@ -148,20 +135,17 @@ void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
     // Print a one-line performance report.
     double duration = omp_get_wtime() - begintime;
     printf("%f seconds\n", duration);
-    free(coordsdata);
-    free(normsdata);
 
     // Dilate the image by 2 pixels to allow bilinear texturing near seams.
     // Note that this still allows seams when mipmapping, unless mipmap levels
     // are generated very carefully.
     for (int step = 0; step < 2; step++) {
-        FILE* normsfile = fopen(normsbin, "rb");
-        fread(size, 1, sizeof(size), normsfile);
-        float norm[3];
         unsigned char* tmp = (unsigned char*) calloc(size[0] * size[1], 1);
+        float const* pnormsdata = normsdata;
         for (int y = 0; y < size[1]; y++) {
             for (int x = 0; x < size[0]; x++) {
-                fread(norm, 1, sizeof(float) * 3, normsfile);
+                float const* norm = pnormsdata;
+                pnormsdata += 3;
                 int center = x + y * size[0];
                 tmp[center] = results[center];
                 if (norm[0] == 0 && norm[1] == 0 && norm[2] == 0 &&
@@ -186,7 +170,6 @@ void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
         }
         std::swap(results, tmp);
         free(tmp);
-        fclose(normsfile);
     }
 
     // Write the image.
