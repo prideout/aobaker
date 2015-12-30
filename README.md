@@ -24,7 +24,7 @@ $ cp embree.rb /usr/local/Library/Formula
 $ brew install embree tbb cmake
 ```
 
-You also need a compiler that supports OpenMP, which is a bit tricky if you've already got clang installed.  Here's how I did it:
+This is optional, but you'll probably want to use a compiler that supports OpenMP, which is a bit tricky if you've already got clang installed.  Here's how I did it:
 
 ```bash
 brew uninstall gcc

@@ -93,25 +93,17 @@ enum Atlas_Error {
 
 void atlas_set_default_options(Atlas_Options * options);
 
-Atlas_Output_Mesh * atlas_generate(const Atlas_Input_Mesh * input, const Atlas_Options * options, Atlas_Error * error);
+Atlas_Output_Mesh * atlas_generate(
+    const Atlas_Input_Mesh * input,
+    const Atlas_Options * options,
+    Atlas_Error * error);
 
-void atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_Mesh * object_mesh);
+void atlas_dump(
+    const Atlas_Output_Mesh * atlas_mesh,
+    const Atlas_Input_Mesh * object_mesh,
+    const char* oobjmesh,
+    bool gbuffer);
 
 void atlas_free(Atlas_Output_Mesh * output);
 
-
-/*
-
-Should we represent the input mesh with an opaque structure that simply holds pointers to the user data? That would allow us to avoid having to copy attributes to an intermediate representation.
-
-struct Atlas_Input_Mesh;
-
-void mesh_set_vertex_position(Atlas_Input_Mesh * mesh, float * ptr, int stride);
-void mesh_set_vertex_normal(Atlas_Input_Mesh * mesh, float * ptr, int stride);
-void mesh_set_vertex_uv(Mesh * mesh, float * ptr, int stride);
-
-void mesh_set_index(Mesh * mesh, int * ptr);
-*/
-
-} // Thekla namespace
-
+}

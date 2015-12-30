@@ -16,12 +16,13 @@ add_subdirectory(thekla)
 add_subdirectory(vendor/poshlib)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "-fopenmp")
+    set(CMAKE_CXX_FLAGS "-fopenmp -std=c++11")
+else()
+    set(CMAKE_CXX_FLAGS "-std=c++11")
 endif()
 
 add_definitions(
     -O3
-    -std=c++11
     -I${EMBREE_PATH}/include
     -I${TBB_PATH}/include
     -Wall)
@@ -32,11 +33,13 @@ link_directories(
 
 include_directories(
     thekla/thekla
+    vendor/flag
     vendor/stb
     vendor/tinyobj)
 
 add_executable(
     aobaker
+    cmdline.c
     raytrace.cpp
     aobaker.cpp)
 

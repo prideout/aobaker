@@ -1,7 +1,7 @@
 #include <thekla_atlas.h>
-
 #include <cstdio>
 #include <cassert>
+#include "aobaker.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -68,15 +68,17 @@ static void obj_mesh_free(Atlas_Input_Mesh* mesh)
     }
 }
 
-int main(int argc, char * argv[])
+int aobaker_bake(
+    char const* inputmesh,
+    char const* outputmesh,
+    char const* outputatlas,
+    int sizehint,
+    int nsamples,
+    bool gbuffer,
+    bool chartinfo)
 {
-    if (argc != 2) {
-        printf("Usage: %s input_file.obj\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-
-    // Load ObjMesh.
-    Atlas_Input_Mesh* obj_mesh = obj_mesh_load(argv[1]);
+    // Load Obj Mesh.
+    Atlas_Input_Mesh* obj_mesh = obj_mesh_load(inputmesh);
     if (!obj_mesh) {
         printf("Error loading obj file.\n");
         return EXIT_FAILURE;
@@ -85,7 +87,7 @@ int main(int argc, char * argv[])
     // Generate Atlas_Output_Mesh.
     Atlas_Options atlas_options;
     atlas_set_default_options(&atlas_options);
-    atlas_options.packer_options.witness.texel_area = 32;
+    atlas_options.packer_options.witness.texel_area = sizehint;
     Atlas_Error error = Atlas_Error_Success;
     Atlas_Output_Mesh* output_mesh = atlas_generate(obj_mesh,
         &atlas_options, &error);
@@ -93,15 +95,15 @@ int main(int argc, char * argv[])
     printf("Atlas mesh has %d triangles\n", output_mesh->index_count / 3);
 
     // Write a bunch of files to disk.
-    atlas_dump(output_mesh, obj_mesh);
+    atlas_dump(output_mesh, obj_mesh, outputmesh, gbuffer);
 
     // Free meshes.
     obj_mesh_free(obj_mesh);
     atlas_free(output_mesh);
 
     // Perform raytracing.
-    raytrace("result.obj", "object_coords.bin", "facet_normals.bin",
-        "result.png", 256);
+    raytrace(outputmesh, "object_coords.bin", "facet_normals.bin",
+        outputatlas, nsamples);
 
     return EXIT_SUCCESS;
 }

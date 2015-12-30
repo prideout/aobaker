@@ -291,11 +291,15 @@ static bool floatSolidCallback(
     return true;
 }
 
-void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_Mesh * obj_mesh)
+void Thekla::atlas_dump(
+    const Atlas_Output_Mesh * atlas_mesh,
+    const Atlas_Input_Mesh * obj_mesh,
+    const char* oobjmesh,
+    bool gbuffer)
 {
     // Dump out the mutated mesh in simplified form and compute the AABB.
-    printf("Writing result.obj...\n");
-    FILE* outobj = fopen("result.obj", "wt");
+    printf("Writing %s...\n", oobjmesh);
+    FILE* outobj = fopen(oobjmesh, "wt");
     float uscale = 1.f / atlas_mesh->atlas_width;
     float vscale = 1.f / atlas_mesh->atlas_height;
     Vector3 minp(FLT_MAX);
@@ -373,8 +377,10 @@ void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_
         png.objspace[2].z = k.position[2];
         Raster::drawTriangle(true, extents, true, triverts, floatAtlasCallback, &png);
     }
-    printf("Writing object_coords.png...\n");
-    stbi_write_png("object_coords.png", width, height, 3, colors, 0);
+    if (gbuffer) {
+        printf("Writing object_coords.png...\n");
+        stbi_write_png("object_coords.png", width, height, 3, colors, 0);
+    }
     printf("Writing object_coords.bin...\n");
     FILE* objbin = fopen("object_coords.bin", "wb");
     fwrite(&width, 1, 4, objbin);
@@ -421,8 +427,12 @@ void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_
         png.fpcolor[2] = N1.z;
         Raster::drawTriangle(true, extents, true, triverts, floatSolidCallback, &png);
     }
-    printf("Writing facet_normals.png...\n");
-    stbi_write_png("facet_normals.png", width, height, 3, colors, 0);
+
+    if (gbuffer) {
+        printf("Writing facet_normals.png...\n");
+        stbi_write_png("facet_normals.png", width, height, 3, colors, 0);
+    }
+
     printf("Writing facet_normals.bin...\n");
     FILE* normbin = fopen("facet_normals.bin", "wb");
     fwrite(&width, 1, 4, normbin);
@@ -432,8 +442,6 @@ void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_
 
     free(colors);
     free(floats);
-
-    printf("Writing object_coords.bin...\n");
 }
 
 
