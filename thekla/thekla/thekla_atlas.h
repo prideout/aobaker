@@ -99,6 +99,8 @@ Atlas_Output_Mesh * atlas_generate(
     const Atlas_Options * options,
     Atlas_Error * error);
 
+void atlas_reorder_faces(Atlas_Output_Mesh * atlas_mesh, const char* outputfile);
+
 void atlas_dump(
     const Atlas_Output_Mesh * atlas_mesh,
     const Atlas_Input_Mesh * object_mesh,

@@ -95,6 +95,11 @@ int aobaker_bake(
     printf("Atlas mesh has %d verts\n", output_mesh->vertex_count);
     printf("Atlas mesh has %d triangles\n", output_mesh->index_count / 3);
 
+    // Reorder faces according to their respective charts.
+    if (chartinfo) {
+        atlas_reorder_faces(output_mesh, "chartids.json");
+    }
+
     // Transform the data produced by the Thekla library.
     float* coordsdata = 0;
     float* normsdata = 0;

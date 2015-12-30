@@ -16,7 +16,7 @@ int main(int argc, const char **argv)
     flag_int(&sizehint, "sizehint", "Controls resolution of atlas");
     flag_int(&nsamples, "nsamples", "Quality of ambient occlusion");
     flag_bool(&gbuffer, "gbuffer", "Generate diagnostic images");
-    flag_bool(&chartinfo, "ids", "Add a chart id to the alpha channel");
+    flag_bool(&chartinfo, "ids", "Group faces by charts, add alpha channel");
     flag_parse(argc, argv, "v" AOBAKER_VERSION, 1);
     char const* inmesh = flagset_singleton()->argv[0];
     return aobaker_bake(inmesh, outmesh, atlas, sizehint, nsamples, gbuffer,

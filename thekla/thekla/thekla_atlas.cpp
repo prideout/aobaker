@@ -1,8 +1,9 @@
-
 #include "thekla_atlas.h"
 
 #include <cfloat>
 #include <cstdio>
+#include <vector>
+#include <map>
 
 #include "nvmesh/halfedge/Edge.h"
 #include "nvmesh/halfedge/Mesh.h"
@@ -10,9 +11,7 @@
 #include "nvmesh/halfedge/Vertex.h"
 #include "nvmesh/param/Atlas.h"
 #include "nvmesh/raster/Raster.h"
-
 #include "nvmath/Vector.inl"
-
 #include "nvcore/Array.inl"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -20,7 +19,6 @@
 
 using namespace Thekla;
 using namespace nv;
-
 
 inline Atlas_Output_Mesh * set_error(Atlas_Error * error, Atlas_Error code) {
     if (error) *error = code;
@@ -307,6 +305,44 @@ static bool idSolidCallback(
     int width = ((ShaderData*) param)->width;
     ids[x + y * width] = id;
     return true;
+}
+
+void Thekla::atlas_reorder_faces(Atlas_Output_Mesh * atlas_mesh, const char* outputfile)
+{
+    printf("Writing %s...\n", outputfile);
+    std::map<int, std::vector<int> > chart_to_faces;
+    std::map<int, std::vector<int> >::const_iterator chart_iter;
+    int nfaces = atlas_mesh->index_count / 3;
+    for (int nface = 0; nface < nfaces; nface++) {
+        int a = atlas_mesh->index_array[nface * 3];
+        Atlas_Output_Vertex& v = atlas_mesh->vertex_array[a];
+        chart_to_faces[v.chart_index].push_back(nface);
+    }
+    FILE* json = fopen(outputfile, "wt");
+    putc('[', json);
+    chart_iter = chart_to_faces.begin();
+    int* indices = new int[nfaces * 3], *pindex = indices;
+    while (chart_iter != chart_to_faces.end()) {
+        const std::vector<int>& faces = chart_iter->second;
+        for (size_t i = 0; i < faces.size(); i++) {
+            int nface = faces[i];
+            int a = atlas_mesh->index_array[nface * 3];
+            int b = atlas_mesh->index_array[nface * 3 + 1];
+            int c = atlas_mesh->index_array[nface * 3 + 2];
+            *pindex++ = a;
+            *pindex++ = b;
+            *pindex++ = c;
+        }
+        fprintf(json, "%d", (int) faces.size());
+        if (++chart_iter != chart_to_faces.end()) {
+            fputc(',', json);
+        }
+    }
+    putc(']', json);
+    putc('\n', json);
+    fclose(json);
+    delete[] atlas_mesh->index_array;
+    atlas_mesh->index_array = indices;
 }
 
 void Thekla::atlas_dump(
