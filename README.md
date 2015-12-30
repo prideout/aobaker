@@ -15,7 +15,7 @@ Texture coordinates can be generated using Microsoft's open source [UVAtlas](htt
 
 ---
 
-Presently, only OS X is officially supported.  Since CMake is used, other platforms could easily be supported with a few minor tweaks.
+**Building in OS X**
 
 Homebrew is the easiest way to install the dependencies.  Simply cd to your local copy of this repo and do this:
 
@@ -24,7 +24,7 @@ $ cp embree.rb /usr/local/Library/Formula
 $ brew install embree tbb cmake
 ```
 
-You'll also need a compiler that support OpenMP, which is a bit tricky if you've already got clang installed.  Here's how I did it:
+You also need a compiler that supports OpenMP, which is a bit tricky if you've already got clang installed.  Here's how I did it:
 
 ```bash
 brew uninstall gcc

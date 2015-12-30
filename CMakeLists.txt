@@ -15,7 +15,9 @@ message(TBB_PATH = ${TBB_PATH})
 add_subdirectory(thekla)
 add_subdirectory(vendor/poshlib)
 
-set(CMAKE_CXX_FLAGS "-fopenmp")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "-fopenmp")
+endif()
 
 add_definitions(
     -O3

@@ -8,7 +8,14 @@
 #include <cassert>
 #include <cmath>
 #include <cfloat>
+
+#ifdef __llvm__
+double omp_get_wtime() { return 1; }
+int omp_get_max_threads() { return 1; }
+int omp_get_thread_num() { return 1; }
+#else
 #include <omp.h>
+#endif
 
 using namespace std;
 using namespace tinyobj;
