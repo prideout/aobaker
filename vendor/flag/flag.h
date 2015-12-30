@@ -2,6 +2,7 @@
 #ifndef _FLAG_H_
 #define _FLAG_H_
 
+#include <stdio.h>
 #include <stdbool.h>
 
 /*
@@ -76,6 +77,9 @@ typedef struct {
 // Flagset.
 
 flagset_t *
+flagset_singleton();
+
+flagset_t *
 flagset_new();
 
 void
@@ -108,7 +112,10 @@ void
 flag_string(const char **value, const char *name, const char *help);
 
 void
-flag_parse(int argc, const char **args, const char *version);
+flag_parse(int argc, const char **args, const char *version, int reqargc);
+
+void
+flag_usage(const char *msg);
 
 #define flag_str flag_string
 

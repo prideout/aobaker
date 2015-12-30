@@ -104,6 +104,12 @@ largest_flag_name(flagset_t *self) {
  */
 
 flagset_t *
+flagset_singleton() {
+    if (set == NULL) set = flagset_new();
+    return set;
+}
+
+flagset_t *
 flagset_new() {
   flagset_t *self = calloc(1, sizeof(flagset_t));
   if (!self) return NULL;
@@ -224,7 +230,7 @@ flagset_write_usage(flagset_t *self, FILE *fp, const char *name) {
  */
 
 void
-flag_parse(int argc, const char **args, const char *version) {
+flag_parse(int argc, const char **args, const char *version, int reqargc) {
   const char *name = args[0];
   bool showVersion = false;
   bool showHelp = false;
@@ -251,15 +257,21 @@ flag_parse(int argc, const char **args, const char *version) {
       break;
   }
 
-  if (showHelp) {
-    flagset_write_usage(set, stdout, name);
-    exit(0);
-  }
-
   if (showVersion) {
     printf("%s\n", version);
     exit(0);
   }
+
+  if (showHelp || set->argc != reqargc) {
+    flagset_write_usage(set, stdout, name);
+    exit(0);
+  }
+}
+
+void
+flag_usage(const char *msg)
+{
+    flagset_singleton()->usage = msg;
 }
 
 /*
