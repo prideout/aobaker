@@ -166,8 +166,8 @@ Atlas_Output_Mesh * Thekla::atlas_generate(const Atlas_Input_Mesh * input, const
         int v1 = input->face_array[i].vertex_index[1];
         int v2 = input->face_array[i].vertex_index[2];
 
-        if (v0 < 0 || v0 >= input->vertex_count || 
-            v1 < 0 || v1 >= input->vertex_count || 
+        if (v0 < 0 || v0 >= input->vertex_count ||
+            v1 < 0 || v1 >= input->vertex_count ||
             v2 < 0 || v2 >= input->vertex_count)
         {
             return set_error(error, Atlas_Error_Invalid_Mesh);
@@ -184,10 +184,8 @@ Atlas_Output_Mesh * Thekla::atlas_generate(const Atlas_Input_Mesh * input, const
         return NULL;
     }
 
-
     // Charter.
     Atlas atlas(mesh.ptr());
-    
     if (options->charter == Atlas_Charter_Extract) {
         return set_error(error, Atlas_Error_Not_Implemented);
     }
@@ -204,12 +202,10 @@ Atlas_Output_Mesh * Thekla::atlas_generate(const Atlas_Input_Mesh * input, const
         atlas.computeCharts(segmentation_settings);
     }
 
-
     // Mapper.
     if (options->mapper == Atlas_Mapper_LSCM) {
         atlas.parameterizeCharts();
     }
-
 
     // Packer.
     if (options->packer == Atlas_Packer_Witness) {
@@ -219,7 +215,6 @@ Atlas_Output_Mesh * Thekla::atlas_generate(const Atlas_Input_Mesh * input, const
 
         /*float utilization =*/ atlas.packCharts(packing_quality, texel_area, texel_padding);
     }
-
 
     // Build output mesh.
     return mesh_atlas_to_output(mesh.ptr(), atlas, error);
@@ -299,8 +294,8 @@ static bool floatSolidCallback(
 void Thekla::atlas_dump(const Atlas_Output_Mesh * atlas_mesh, const Atlas_Input_Mesh * obj_mesh)
 {
     // Dump out the mutated mesh in simplified form and compute the AABB.
-    printf("Writing modified.obj...\n");
-    FILE* outobj = fopen("modified.obj", "wt");
+    printf("Writing result.obj...\n");
+    FILE* outobj = fopen("result.obj", "wt");
     float uscale = 1.f / atlas_mesh->atlas_width;
     float vscale = 1.f / atlas_mesh->atlas_height;
     Vector3 minp(FLT_MAX);

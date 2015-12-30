@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cmath>
 #include <cfloat>
+#include <omp.h>
 
 using namespace std;
 using namespace tinyobj;
@@ -73,42 +74,48 @@ void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
     indices.shrink_to_fit();
     rtcCommit(scene);
 
-    // Crawl over each pixel in the light map and cast rays.
+    // Slurp the coordinate and normals data.
+    FILE* coordsfile = fopen(coordsbin, "rb");
+    FILE* normsfile = fopen(normsbin, "rb");
+    int32_t size[2];
+    fread(size, 1, sizeof(size), coordsfile);
+    fread(size, 1, sizeof(size), normsfile);
+    uint32_t npixels = size[0] * size[1];
+    float* coordsdata = (float*) malloc(sizeof(float) * 3 * npixels);
+    fread(coordsdata, 1, sizeof(float) * 3 * npixels, coordsfile);
+    float* normsdata = (float*) malloc(sizeof(float) * 3 * npixels);
+    fread(normsdata, 1, sizeof(float) * 3 * npixels, normsfile);
+    fclose(coordsfile);
+    fclose(normsfile);
+
+    // Iterate over each pixel in the light map, row by row.
+    printf("Rendering ambient occlusion (%d threads)...\n",
+        omp_get_max_threads());
+    double begintime = omp_get_wtime();
+    unsigned char* results = (unsigned char*) calloc(size[0] * size[1], 1);
+    const float E = 0.001f;
+#pragma omp parallel
+{
+    srand(omp_get_thread_num());
     RTCRay ray;
     ray.primID = RTC_INVALID_GEOMETRY_ID;
     ray.instID = RTC_INVALID_GEOMETRY_ID;
     ray.mask = 0xFFFFFFFF;
     ray.time = 0.f;
-    FILE* coordsfile = fopen(coordsbin, "rb");
-    FILE* normsfile = fopen(normsbin, "rb");
-    uint32_t size[2];
-    fread(size, 1, sizeof(size), coordsfile);
-    fread(size, 1, sizeof(size), normsfile);
-    unsigned char* results = (unsigned char*) calloc(size[0] * size[1], 1);
-    unsigned char* presult = results;
-    const float E = 0.001f;
-    float norm[3];
-    float origin[3];
-    uint32_t npixels = size[0] * size[1];
+#pragma omp for
     for (uint32_t i = 0; i < npixels; i++) {
-
-        // Poor man's progress indicator.
-        if ((i % (npixels / 10)) == 0) {
-            printf("%d\n", 10 - i / (npixels / 10));
-        }
-
-        fread(origin, 1, sizeof(float) * 3, coordsfile);
-        fread(norm, 1, sizeof(float) * 3, normsfile);
+        float const* norm = normsdata + i * 3;
+        float const* origin = coordsdata + i * 3;
         if (norm[0] == 0 && norm[1] == 0 && norm[2] == 0) {
-            *presult++ = 0;
+            results[i] = 0;
             continue;
         }
-
         ray.org[0] = origin[0];
         ray.org[1] = origin[1];
         ray.org[2] = origin[2];
-
         int nhits = 0;
+
+        // Shoot rays through the differential hemisphere.
         for (int nsamp = 0; nsamp < nsamples; nsamp++) {
             random_direction(ray.dir);
             float dotp = norm[0] * ray.dir[0] +
@@ -127,16 +134,23 @@ void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
                 nhits++;
             }
         }
-        *presult++ = 255 - 255.0f * nhits / nsamples;
+        results[i] = 255 - 255.0f * nhits / nsamples;
     }
-    fclose(coordsfile);
+}
+
+    // Print a one-line performance report.
+    double duration = omp_get_wtime() - begintime;
+    printf("%f seconds\n", duration);
+    free(coordsdata);
+    free(normsdata);
 
     // Dilate the image by 2 pixels to allow bilinear texturing near seams.
     // Note that this still allows seams when mipmapping, unless mipmap levels
     // are generated very carefully.
     for (int step = 0; step < 2; step++) {
-        fseek(normsfile, 0, SEEK_SET);
+        FILE* normsfile = fopen(normsbin, "rb");
         fread(size, 1, sizeof(size), normsfile);
+        float norm[3];
         unsigned char* tmp = (unsigned char*) calloc(size[0] * size[1], 1);
         for (int y = 0; y < size[1]; y++) {
             for (int x = 0; x < size[0]; x++) {
@@ -165,8 +179,8 @@ void raytrace(const char* meshobj, const char* coordsbin, const char* normsbin,
         }
         std::swap(results, tmp);
         free(tmp);
+        fclose(normsfile);
     }
-    fclose(normsfile);
 
     // Write the image.
     printf("Writing %s...\n", resultpng);

@@ -15,6 +15,8 @@ message(TBB_PATH = ${TBB_PATH})
 add_subdirectory(thekla)
 add_subdirectory(vendor/poshlib)
 
+set(CMAKE_CXX_FLAGS "-fopenmp")
+
 add_definitions(
     -O3
     -std=c++11

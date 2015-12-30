@@ -100,8 +100,8 @@ int main(int argc, char * argv[])
     atlas_free(output_mesh);
 
     // Perform raytracing.
-    raytrace("modified.obj", "object_coords.bin", "facet_normals.bin",
-        "result.png", 128);
+    raytrace("result.obj", "object_coords.bin", "facet_normals.bin",
+        "result.png", 256);
 
     return EXIT_SUCCESS;
 }
