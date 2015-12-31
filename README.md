@@ -43,3 +43,9 @@ You can now invoke the tool on the test mesh:
 ```bash
 $ build/aobaker suzanne.obj
 ```
+
+You can also get a list of available options:
+
+```bash
+$ build/aobaker --help
+```
