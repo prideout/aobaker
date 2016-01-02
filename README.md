@@ -7,7 +7,7 @@ This little public domain tool does the following:
 
 The first bullet uses Thekla's parameterization code; the second bullet uses Intel's embree library for raytracing.
 
-![](https://github.com/prideout/aobaker/blob/master/suzanne.jpg)
+![](https://github.com/prideout/aobaker/blob/master/suzanne.png)
 
 **Similar Tools**
 
