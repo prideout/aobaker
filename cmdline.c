@@ -10,6 +10,7 @@ int main(int argc, const char **argv)
     int nsamples = 128;
     bool gbuffer = false;
     bool chartinfo = false;
+    float multiply = 1.0;
     flag_usage("[options] input_mesh.obj");
     flag_string(&outmesh, "outmesh", "OBJ file to produce");
     flag_string(&atlas, "atlas", "PNG file to produce");
@@ -17,8 +18,9 @@ int main(int argc, const char **argv)
     flag_int(&nsamples, "nsamples", "Quality of ambient occlusion");
     flag_bool(&gbuffer, "gbuffer", "Generate diagnostic images");
     flag_bool(&chartinfo, "ids", "Group faces by charts, add alpha channel");
+    flag_float(&multiply, "multiply", "Scales the AO values be a constant");
     flag_parse(argc, argv, "v" AOBAKER_VERSION, 1);
     char const* inmesh = flagset_singleton()->argv[0];
     return aobaker_bake(inmesh, outmesh, atlas, sizehint, nsamples, gbuffer,
-        chartinfo);
+        chartinfo, multiply);
 }

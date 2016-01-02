@@ -33,7 +33,7 @@ void random_direction(float* result)
 
 void raytrace(const char* meshobj, int size[2], const float* coordsdata,
     const float* normsdata, const uint8_t* chartids, const char* resultpng,
-    int nsamples)
+    int nsamples, float multiply)
 {
     // Intel says to do this, so we're doing it.
     _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
@@ -129,7 +129,8 @@ void raytrace(const char* meshobj, int size[2], const float* coordsdata,
                 nhits++;
             }
         }
-        results[i] = 255 - 255.0f * nhits / nsamples;
+        float ao = multiply * (1.0f - (float) nhits / nsamples);
+        results[i] = std::min(255.0f, 255.0f * ao);
     }
 }
 

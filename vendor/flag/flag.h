@@ -34,6 +34,7 @@ typedef enum {
 
 typedef enum {
   FLAG_TYPE_INT,
+  FLAG_TYPE_FLOAT,
   FLAG_TYPE_BOOL,
   FLAG_TYPE_STRING
 } flag_type;
@@ -87,6 +88,9 @@ flagset_free(flagset_t *self);
 
 void
 flagset_int(flagset_t *self, int *value, const char *name, const char *help);
+
+void
+flagset_float(flagset_t *self, float *value, const char *name, const char *help);
 
 void
 flagset_bool(flagset_t *self, bool *value, const char *name, const char *help);

@@ -15,7 +15,8 @@ int aobaker_bake(
     int sizehint,            // 32
     int nsamples,            // 128
     bool gbuffer,            // false
-    bool chartinfo);         // false
+    bool chartinfo,          // false
+    float multiply);         // 1.0
 
 #ifdef __cplusplus
 }

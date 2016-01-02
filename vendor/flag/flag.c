@@ -182,6 +182,12 @@ flagset_parse(flagset_t *self, int argc, const char **args) {
         if (rc == 0) return ERROR_PARSING;
         break;
       }
+      case FLAG_TYPE_FLOAT: {
+        REQUIRE_ARG;
+        int rc = sscanf(args[++i], "%f", (float *) flag->value);
+        if (rc == 0) return ERROR_PARSING;
+        break;
+      }
       case FLAG_TYPE_STRING:
         REQUIRE_ARG;
         *(const char **) flag->value = args[++i];
@@ -215,6 +221,9 @@ flagset_write_usage(flagset_t *self, FILE *fp, const char *name) {
         break;
       case FLAG_TYPE_INT:
         fprintf(fp, " (%d)", *(int *) flag->value);
+        break;
+      case FLAG_TYPE_FLOAT:
+        fprintf(fp, " (%.1f)", *(float *) flag->value);
         break;
       case FLAG_TYPE_BOOL:
         break;
@@ -280,6 +289,7 @@ flag_usage(const char *msg)
 
 FLAG_TYPE(int, int, INT);
 FLAG_TYPE(bool, bool, BOOL);
+FLAG_TYPE(float, float, FLOAT);
 FLAG_TYPE(string, const char *, STRING);
 
 #undef CHECK_BOUNDS

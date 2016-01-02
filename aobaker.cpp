@@ -11,7 +11,63 @@ using namespace std;
 
 void raytrace(const char* meshobj, int size[2], const float* coordsdata,
     const float* normsdata, const uint8_t* chartids, const char* resultpng,
-    int nsamples);
+    int nsamples, float multiply);
+
+static void obj_mesh_free(Atlas_Input_Mesh* mesh);
+static Atlas_Input_Mesh* obj_mesh_load(const char* filename);
+
+int aobaker_bake(
+    char const* inputmesh,
+    char const* outputmesh,
+    char const* outputatlas,
+    int sizehint,
+    int nsamples,
+    bool gbuffer,
+    bool chartinfo,
+    float multiply)
+{
+    // Load Obj Mesh.
+    Atlas_Input_Mesh* obj_mesh = obj_mesh_load(inputmesh);
+    if (!obj_mesh) {
+        printf("Error loading obj file.\n");
+        return EXIT_FAILURE;
+    }
+
+    // Generate Atlas_Output_Mesh.
+    Atlas_Options atlas_options;
+    atlas_set_default_options(&atlas_options);
+    atlas_options.packer_options.witness.texel_area = sizehint;
+    Atlas_Error error = Atlas_Error_Success;
+    Atlas_Output_Mesh* output_mesh = atlas_generate(obj_mesh,
+        &atlas_options, &error);
+    printf("Atlas mesh has %d verts\n", output_mesh->vertex_count);
+    printf("Atlas mesh has %d triangles\n", output_mesh->index_count / 3);
+
+    // Reorder faces according to their respective charts.
+    if (chartinfo) {
+        atlas_reorder_faces(output_mesh, "chartids.json");
+    }
+
+    // Transform the data produced by the Thekla library.
+    float* coordsdata = 0;
+    float* normsdata = 0;
+    uint8_t* chartids = 0;
+    int size[2];
+    atlas_dump(output_mesh, obj_mesh, outputmesh, gbuffer, &coordsdata,
+        &normsdata, chartinfo ? (&chartids) : 0, size);
+
+    // Free meshes.
+    obj_mesh_free(obj_mesh);
+    atlas_free(output_mesh);
+
+    // Perform raytracing.
+    raytrace(outputmesh, size, coordsdata, normsdata, chartids, outputatlas,
+        nsamples, multiply);
+    free(coordsdata);
+    free(normsdata);
+    free(chartids);
+    return EXIT_SUCCESS;
+}
 
 static Atlas_Input_Mesh* obj_mesh_load(const char* filename)
 {
@@ -59,7 +115,6 @@ static Atlas_Input_Mesh* obj_mesh_load(const char* filename)
     return mesh;
 }
 
-
 static void obj_mesh_free(Atlas_Input_Mesh* mesh)
 {
     if (mesh != NULL) {
@@ -67,56 +122,4 @@ static void obj_mesh_free(Atlas_Input_Mesh* mesh)
         delete [] mesh->face_array;
         delete mesh;
     }
-}
-
-int aobaker_bake(
-    char const* inputmesh,
-    char const* outputmesh,
-    char const* outputatlas,
-    int sizehint,
-    int nsamples,
-    bool gbuffer,
-    bool chartinfo)
-{
-    // Load Obj Mesh.
-    Atlas_Input_Mesh* obj_mesh = obj_mesh_load(inputmesh);
-    if (!obj_mesh) {
-        printf("Error loading obj file.\n");
-        return EXIT_FAILURE;
-    }
-
-    // Generate Atlas_Output_Mesh.
-    Atlas_Options atlas_options;
-    atlas_set_default_options(&atlas_options);
-    atlas_options.packer_options.witness.texel_area = sizehint;
-    Atlas_Error error = Atlas_Error_Success;
-    Atlas_Output_Mesh* output_mesh = atlas_generate(obj_mesh,
-        &atlas_options, &error);
-    printf("Atlas mesh has %d verts\n", output_mesh->vertex_count);
-    printf("Atlas mesh has %d triangles\n", output_mesh->index_count / 3);
-
-    // Reorder faces according to their respective charts.
-    if (chartinfo) {
-        atlas_reorder_faces(output_mesh, "chartids.json");
-    }
-
-    // Transform the data produced by the Thekla library.
-    float* coordsdata = 0;
-    float* normsdata = 0;
-    uint8_t* chartids = 0;
-    int size[2];
-    atlas_dump(output_mesh, obj_mesh, outputmesh, gbuffer, &coordsdata,
-        &normsdata, chartinfo ? (&chartids) : 0, size);
-
-    // Free meshes.
-    obj_mesh_free(obj_mesh);
-    atlas_free(output_mesh);
-
-    // Perform raytracing.
-    raytrace(outputmesh, size, coordsdata, normsdata, chartids, outputatlas,
-        nsamples);
-    free(coordsdata);
-    free(normsdata);
-    free(chartids);
-    return EXIT_SUCCESS;
 }
