@@ -42,7 +42,7 @@ Homebrew is the easiest way to install the dependencies:
 
 ```bash
 $ cp ~/git/aobaker/embree.rb /usr/local/Library/Formula
-$ brew install embree cmake
+$ brew install embree tbb cmake
 ```
 
 This is optional, but you might want to use a compiler that supports OpenMP, which is a bit tricky if you've already got clang installed.  Here's how I did it:
