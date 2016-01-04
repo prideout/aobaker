@@ -1,13 +1,19 @@
 cmake_minimum_required(VERSION 2.8.8)
 project(aobaker)
 
-exec_program(brew
-    ARGS "info embree | tr ' ' '\n' | grep Cellar"
-    OUTPUT_VARIABLE EMBREE_PATH)
+if(APPLE)
+    exec_program(brew
+        ARGS "info embree | tr ' ' '\n' | grep Cellar"
+        OUTPUT_VARIABLE EMBREE_PATH)
 
-exec_program(brew
-    ARGS "info tbb | tr ' ' '\n' | grep Cellar"
-    OUTPUT_VARIABLE TBB_PATH)
+    exec_program(brew
+        ARGS "info tbb | tr ' ' '\n' | grep Cellar"
+        OUTPUT_VARIABLE TBB_PATH)
+else()
+    # TODO: Find packages
+    set(EMBREE_PATH "/usr/local" CACHE PATH "Embree location")
+    set(TBB_PATH "/usr" CACHE PATH "Threading Building Blocks location")
+endif()
 
 message(EMBREE_PATH = ${EMBREE_PATH})
 message(TBB_PATH = ${TBB_PATH})
@@ -17,8 +23,10 @@ add_subdirectory(vendor/poshlib)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -std=c++11")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
 endif()
 
 add_definitions(
