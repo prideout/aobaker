@@ -2,7 +2,7 @@
 
 This little public domain tool does the following:
 
-- Generates reasonable UV's for an arbitrary mesh.
+- Generates reasonable UV's for any topologically "clean" mesh.
 - Creates a texture representing ambient occlusion.
 
 The first bullet uses Thekla's parameterization code; the second bullet uses Intel's embree library for raytracing.
