@@ -17,6 +17,10 @@ Texture coordinates can be generated using Microsoft's open source [UVAtlas](htt
 
 [IBLBaker](http://www.derkreature.com/iblbaker/) does something completely different, but also looks interesting.
 
+[xatlas](https://github.com/jpcy/xatlas)
+
+[lightmapper](https://github.com/ands/lightmapper)
+
 **Usage**
 
 ```
